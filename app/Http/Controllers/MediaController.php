@@ -15,8 +15,8 @@ class MediaController extends Controller
      */
     public function serveMemory(Request $request, MemoryMedia $memoryMedia): StreamedResponse
     {
-        // 1. Authorization: either signed URL or authenticated couple member
-        $hasValidSignature = $request->hasValidSignature();
+        // 1. Authorization: either signed URL (relative or absolute) or authenticated couple member
+        $hasValidSignature = $request->hasValidSignature() || $request->hasValidSignature(false);
         $memory = $memoryMedia->memory()->withoutGlobalScopes()->first();
         $isAuthorizedUser = $request->user() && $memory && $request->user()->couple_id === $memory->couple_id;
 
@@ -38,7 +38,7 @@ class MediaController extends Controller
     {
         $wishlist = Wishlist::withoutGlobalScopes()->findOrFail($wishlistId);
 
-        $hasValidSignature = $request->hasValidSignature();
+        $hasValidSignature = $request->hasValidSignature() || $request->hasValidSignature(false);
         $isAuthorizedUser = $request->user() && $request->user()->couple_id === $wishlist->couple_id;
 
         if (!$hasValidSignature && !$isAuthorizedUser) {

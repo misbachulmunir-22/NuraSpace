@@ -17,13 +17,27 @@
         </div>
     </x-slot>
 
-    <div class="py-6 sm:py-8" x-data="{ modalOpen: false }" @open-add-memory-modal.window="modalOpen = true">
+    <div class="py-6 sm:py-8" x-data="{ modalOpen: {{ $errors->any() ? 'true' : 'false' }} }" @open-add-memory-modal.window="modalOpen = true">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
             @if (session('status'))
                 <div class="bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 px-4 py-3 rounded-2xl flex items-center gap-3 shadow-xs">
                     <span class="text-xl">✨</span>
                     <span class="text-sm font-medium">{{ session('status') }}</span>
+                </div>
+            @endif
+
+            @if ($errors->any() && !old('title'))
+                <div class="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 px-4 py-3 rounded-2xl flex items-center gap-3 shadow-xs">
+                    <span class="text-xl">⚠️</span>
+                    <div class="text-sm">
+                        <span class="font-medium">Terjadi kesalahan validasi.</span>
+                        <ul class="list-disc list-inside mt-1 text-xs text-rose-700 dark:text-rose-300">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
                 </div>
             @endif
 
@@ -195,12 +209,26 @@
                 <form action="{{ route('memories.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4 mt-5">
                     @csrf
 
+                    @if ($errors->any())
+                        <div class="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 p-3 rounded-xl text-xs space-y-1">
+                            <div class="font-bold flex items-center gap-1.5">
+                                <span>⚠️</span> Mohon periksa kembali:
+                            </div>
+                            <ul class="list-disc list-inside space-y-0.5 text-rose-700 dark:text-rose-300">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Judul Momen / Kenangan *</label>
                         <input 
                             type="text" 
                             name="title" 
                             required 
+                            value="{{ old('title') }}"
                             placeholder="Contoh: Kencan Pertama di Pantai, Kelahiran Buah Hati" 
                             class="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-sm focus:border-pink-500 focus:ring-pink-500"
                         >
@@ -213,7 +241,7 @@
                                 type="date" 
                                 name="memory_date" 
                                 required 
-                                value="{{ date('Y-m-d') }}"
+                                value="{{ old('memory_date', date('Y-m-d')) }}"
                                 class="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-sm focus:border-pink-500 focus:ring-pink-500"
                             >
                         </div>
@@ -222,6 +250,7 @@
                             <input 
                                 type="text" 
                                 name="location" 
+                                value="{{ old('location') }}"
                                 placeholder="Contoh: Yogyakarta, Rumah Kita" 
                                 class="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-sm focus:border-pink-500 focus:ring-pink-500"
                             >
@@ -247,7 +276,7 @@
                             rows="3" 
                             placeholder="Tuliskan rasa bahagia, percakapan lucu, atau momen manis yang terjadi..." 
                             class="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-sm focus:border-pink-500 focus:ring-pink-500"
-                        ></textarea>
+                        >{{ old('description') }}</textarea>
                     </div>
 
                     <div class="flex items-center gap-2 pt-1">
@@ -256,6 +285,7 @@
                             name="is_milestone" 
                             id="is_milestone" 
                             value="1" 
+                            {{ old('is_milestone') ? 'checked' : '' }}
                             class="rounded border-gray-300 text-amber-500 focus:ring-amber-400"
                         >
                         <label for="is_milestone" class="text-xs font-medium text-gray-700 dark:text-gray-300 cursor-pointer">

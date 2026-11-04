@@ -36,12 +36,19 @@ class MemoryController extends Controller
 
         $memories = $query->paginate(12)->withQueryString();
 
-        // Get list of available years for quick filter
+        // Get list of available years for quick filter (database-agnostic across SQLite, MySQL, and PostgreSQL)
         $availableYears = Memory::where('couple_id', $user->couple_id)
-            ->selectRaw('DISTINCT strftime("%Y", memory_date) as year')
-            ->orderByDesc('year')
-            ->pluck('year')
-            ->filter();
+            ->whereNotNull('memory_date')
+            ->pluck('memory_date')
+            ->map(function ($date) {
+                return $date instanceof \Carbon\CarbonInterface 
+                    ? $date->format('Y') 
+                    : \Carbon\Carbon::parse($date)->format('Y');
+            })
+            ->unique()
+            ->sortDesc()
+            ->values();
+
 
         $totalMilestones = Memory::where('couple_id', $user->couple_id)
             ->where('is_milestone', true)

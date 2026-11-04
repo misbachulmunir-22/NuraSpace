@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: nuraspace
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: main
+    autoDeploy: true
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_NAME
+        value: NuraSpace
+      - key: APP_TIMEZONE
+        value: Asia/Jakarta
+      - key: APP_LOCALE
+        value: id
+      - key: APP_FALLBACK_LOCALE
+        value: id
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: NURASPACE_COUPLE_NAME
+        value: "Misbachul Munir & Syahra Alfi Nur Arintia"
+      - key: NURASPACE_ANNIVERSARY
+        value: "2024-05-12"
+      - key: PARTNER_1_NAME
+        value: "Misbachul Munir"
+      - key: PARTNER_1_EMAIL
+        value: "munir@nuraspace.local"
+      - key: PARTNER_1_BIRTHDATE
+        value: "1998-08-17"
+      - key: PARTNER_2_NAME
+        value: "Syahra Alfi Nur Arintia"
+      - key: PARTNER_2_EMAIL
+        value: "syahra@nuraspace.local"
+      - key: PARTNER_2_BIRTHDATE
+        value: "2000-04-21"
