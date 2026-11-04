@@ -17,6 +17,8 @@ FROM php:8.3-apache
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
+    sqlite3 \
+    libsqlite3-dev \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
@@ -24,7 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     zip \
     unzip \
-    && docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip opcache \
+    && docker-php-ext-install pdo pdo_sqlite pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip opcache \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Composer
@@ -36,9 +38,10 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 RUN a2enmod rewrite
 
-# Support dynamic cloud PORT environment variable (Render, Railway, Koyeb, Cloud Run)
-RUN sed -i 's/Listen 80/Listen ${PORT:-80}/g' /etc/apache2/ports.conf \
-    && sed -i 's/<VirtualHost \*:80>/<VirtualHost \*:${PORT:-80}>/g' /etc/apache2/sites-available/000-default.conf
+# Support dynamic cloud PORT environment variable (Koyeb, Hugging Face, Render, Cloud Run)
+ENV PORT=80
+RUN sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/ports.conf \
+    && sed -i 's/<VirtualHost \*:80>/<VirtualHost \*:${PORT}>/g' /etc/apache2/sites-available/000-default.conf
 
 # Production PHP settings
 RUN echo "memory_limit = 256M" > /usr/local/etc/php/conf.d/memory-limit.ini \
@@ -59,15 +62,16 @@ COPY --from=frontend /app/public/build ./public/build
 # Install PHP production dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Set storage and bootstrap cache permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# Set full read/write permissions for storage & cache so any cloud UID can write
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Copy entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-EXPOSE 80
+# Expose default HTTP port 80 and Hugging Face port 7860
+EXPOSE 80 7860
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["apache2-foreground"]
